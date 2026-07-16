@@ -631,18 +631,50 @@
       window.location.href = "./checkout.html";
     }
 
+    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyBsr-x-tGxyOLr0uYSz2kPOG52fGR4poBA5V86aBuA87vpP_QFpxoaMOoAL00jBnPy/exec";
     // --- Form Tư vấn ---
     function submitContactForm(event) {
       event.preventDefault();
+      
+      const submitBtn = event.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Đang gửi thông tin...";
+
       const name = document.getElementById("name").value.trim();
       const phone = document.getElementById("phone").value.trim();
       const combo = document.getElementById("combo").value;
       const message = document.getElementById("message").value.trim();
-      
-      const text = `Chào Zest Cẩm, mình muốn được tư vấn.%0A%0ATên: ${encodeURIComponent(name)}%0ALiên hệ: ${encodeURIComponent(phone)}%0ASản phẩm: ${encodeURIComponent(combo)}%0ALời nhắn: ${encodeURIComponent(message)}`;
-      
-      document.getElementById("formNotice").innerHTML = "Thông tin đã được ghi nhận. Hệ thống sẽ mở Facebook Messenger để bạn gửi trực tiếp cho Shop.";
-      window.open("https://m.me/Zestcam1911?text=" + text, "_blank");
+
+      // Tạo data tương thích với Google Sheet hiện tại
+      const leadData = {
+        orderCode: "YÊU CẦU TƯ VẤN", // Đánh dấu đây là form tư vấn
+        customerName: name,
+        gender: "",
+        phone: phone,
+        address: "",
+        note: `SP Quan tâm: ${combo} | Lời nhắn: ${message}`,
+        items: [],
+        total: 0
+      };
+
+      fetch(GOOGLE_SHEET_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ data: JSON.stringify(leadData) })
+      })
+      .then(() => {
+        document.getElementById("formNotice").innerHTML = "Cảm ơn bạn! Zest Cẩm sẽ liên hệ lại với bạn sớm nhất.";
+        document.getElementById("formNotice").style.color = "green";
+        event.target.reset(); // Xóa form
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Gửi thông tin";
+      })
+      .catch((error) => {
+        alert("Có lỗi xảy ra, vui lòng thử lại!");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Gửi thông tin";
+      });
     }
 
     // --- Modal Phóng to Ảnh ---
